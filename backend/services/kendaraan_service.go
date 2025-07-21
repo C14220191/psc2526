@@ -14,21 +14,31 @@ func NewKendaraanService(db *sql.DB) *KendaraanService {
 }
 
 func (s *KendaraanService) Create(data *models.Kendaraan) error {
-	// TODO: implement insert query
-	return nil
+	query := `INSERT INTO kendaraan (nomor_plat, jenis, status, merek, warna, tahun, created_at, updated_at)
+	          VALUES (?, ?, ?, ?, ?)`
+	_, err := s.DB.Exec(query, data.NomorPlat, data.Jenis, data.Status,data.Merek,data.Warna,data.Tahun, data.CreatedAt, data.UpdatedAt)
+	return err
 }
 
 func (s *KendaraanService) GetByID(id uint) (*models.Kendaraan, error) {
-	// TODO: implement select by ID query
-	return nil, nil
+	query := `SELECT id, nomor_plat, jenis, status, created_at, updated_at FROM kendaraan WHERE id = ?`
+	row := s.DB.QueryRow(query, id)
+	var result models.Kendaraan
+	err := row.Scan(&result.ID, &result.NomorPlat, &result.Jenis, &result.Status, &result.Merek,&result.Warna,&result.Tahun, &result.CreatedAt, &result.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (s *KendaraanService) Update(data *models.Kendaraan) error {
-	// TODO: implement update query
-	return nil
+	query := `UPDATE kendaraan SET nomor_plat = ?, jenis = ?, status = ?, updated_at = ? WHERE id = ?`
+	_, err := s.DB.Exec(query, data.NomorPlat, data.Jenis, data.Status,data.Merek,data.Warna,data.Tahun, data.CreatedAt, data.UpdatedAt)
+	return err
 }
 
 func (s *KendaraanService) Delete(id uint) error {
-	// TODO: implement delete query
-	return nil
+	query := `DELETE FROM kendaraan WHERE id = ?`
+	_, err := s.DB.Exec(query, id)
+	return err
 }

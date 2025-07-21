@@ -14,17 +14,31 @@ func NewRoleService(db *sql.DB) *RoleService {
 }
 
 func (s *RoleService) Create(data *models.Role) error {
-	return nil
+	query := `INSERT INTO role (namaRole, created_at, updated_at, deleted_at) VALUES (?, ?, ?)`
+	_, err := s.DB.Exec(query, data.NamaRole, data.CreatedAt, data.UpdatedAt , data.DeletedAt)
+	return err
 }
 
 func (s *RoleService) GetByID(id uint) (*models.Role, error) {
-	return nil, nil
+	query := `SELECT id, namaRole, created_at, updated_at FROM role WHERE id = ?`
+	row := s.DB.QueryRow(query, id)
+
+	var result models.Role
+	err := row.Scan(&result.ID, &result.NamaRole, &result.CreatedAt, &result.UpdatedAt, result.DeletedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (s *RoleService) Update(data *models.Role) error {
-	return nil
+	query := `UPDATE role SET namaRole = ?, updated_at = ? WHERE id = ?`
+	_, err := s.DB.Exec(query, data.NamaRole, data.UpdatedAt, data.ID, data.DeletedAt)
+	return err
 }
 
 func (s *RoleService) Delete(id uint) error {
-	return nil
+	query := `DELETE FROM role WHERE id = ?`
+	_, err := s.DB.Exec(query, id)
+	return err
 }

@@ -14,17 +14,21 @@ func NewDokterService(db *sql.DB) *DokterService {
 }
 
 func (s *DokterService) Create(data *models.Dokter) error {
-	query := "INSERT INTO dokter (nama, spesialisasi, no_str) VALUES (?, ?, ?)"
-	_, err := s.DB.Exec(query, data.Nama, data.Spesialisasi, data.NoSTR)
+	query := `
+	INSERT INTO dokter (nama, spesialisasi, faskes_id, no_str, jenis_kelamin, kontak, created_at, updated_at)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := s.DB.Exec(query, data.Nama, data.Spesialisasi, data.FaskesID, data.NoSTR, data.JenisKelamin, data.Kontak, data.CreatedAt, data.UpdatedAt)
 	return err
 }
 
 func (s *DokterService) GetByID(id uint) (*models.Dokter, error) {
-	query := "SELECT id, nama, spesialisasi, no_str FROM dokter WHERE id = ?"
+	query := `
+	SELECT id, nama, spesialisasi, faskes_id, no_str, jenis_kelamin, kontak, created_at, updated_at
+	FROM dokter WHERE id = ?`
 	row := s.DB.QueryRow(query, id)
 
 	var result models.Dokter
-	err := row.Scan(&result.ID, &result.Nama, &result.Spesialisasi, &result.NoSTR)
+	err := row.Scan(&result.ID, &result.Nama, &result.Spesialisasi, &result.FaskesID, &result.NoSTR, &result.JenisKelamin, &result.Kontak, &result.CreatedAt, &result.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -32,8 +36,10 @@ func (s *DokterService) GetByID(id uint) (*models.Dokter, error) {
 }
 
 func (s *DokterService) Update(data *models.Dokter) error {
-	query := "UPDATE dokter SET nama = ?, spesialisasi = ?, no_str = ? WHERE id = ?"
-	_, err := s.DB.Exec(query, data.Nama, data.Spesialisasi, data.NoSTR, data.ID)
+	query := `
+	UPDATE dokter SET nama = ?, spesialisasi = ?, faskes_id = ?, no_str = ?, jenis_kelamin = ?, kontak = ?, updated_at = ?
+	WHERE id = ?`
+	_, err := s.DB.Exec(query, data.Nama, data.Spesialisasi, data.FaskesID, data.NoSTR, data.JenisKelamin, data.Kontak, data.UpdatedAt, data.ID)
 	return err
 }
 

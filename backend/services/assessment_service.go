@@ -14,17 +14,31 @@ func NewAssessmentService(db *sql.DB) *AssessmentService {
 }
 
 func (s *AssessmentService) Create(data *models.Assessment) error {
-	return nil
+	query := `INSERT INTO assessment (kasus_id, jawaban, created_at, updated_at) VALUES (?, ?, ?, ?)`
+	_, err := s.DB.Exec(query, data.KasusID, data.Jawaban, data.CreatedAt, data.UpdatedAt)
+	return err
 }
 
 func (s *AssessmentService) GetByID(id uint) (*models.Assessment, error) {
-	return nil, nil
+	query := `SELECT id, kasus_id, jawaban, created_at, updated_at FROM assessment WHERE id = ?`
+	row := s.DB.QueryRow(query, id)
+
+	var result models.Assessment
+	err := row.Scan(&result.ID, &result.KasusID, &result.Jawaban, &result.CreatedAt, &result.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (s *AssessmentService) Update(data *models.Assessment) error {
-	return nil
+	query := `UPDATE assessment SET kasus_id = ?, jawaban = ?, updated_at = ? WHERE id = ?`
+	_, err := s.DB.Exec(query, data.KasusID, data.Jawaban, data.UpdatedAt, data.ID)
+	return err
 }
 
 func (s *AssessmentService) Delete(id uint) error {
-	return nil
+	query := `DELETE FROM assessment WHERE id = ?`
+	_, err := s.DB.Exec(query, id)
+	return err
 }

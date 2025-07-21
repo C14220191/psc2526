@@ -14,17 +14,33 @@ func NewPrivilegeService(db *sql.DB) *PrivilegeService {
 }
 
 func (s *PrivilegeService) Create(data *models.Privilege) error {
-	return nil
+	query := `INSERT INTO privilege (nama_privilege, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?)`
+_, err := s.DB.Exec(query, data.NamaPrivilege, data.CreatedAt, data.UpdatedAt, data.DeletedAt)
+
+	return err
 }
 
 func (s *PrivilegeService) GetByID(id uint) (*models.Privilege, error) {
-	return nil, nil
+	query := `SELECT id, nama_privilege, created_at, updated_at, deleted_at FROM privilege WHERE id = ?`
+	row := s.DB.QueryRow(query, id)
+
+	var result models.Privilege
+	err := row.Scan(&result.ID, &result.NamaPrivilege, &result.CreatedAt, &result.UpdatedAt, &result.DeletedAt)
+
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 func (s *PrivilegeService) Update(data *models.Privilege) error {
-	return nil
+	query := `UPDATE privilege SET nama = ?, deskripsi = ?, updated_at = ? WHERE id = ?`
+_, err := s.DB.Exec(query, data.NamaPrivilege, data.CreatedAt, data.UpdatedAt, data.DeletedAt)
+	return err
 }
 
 func (s *PrivilegeService) Delete(id uint) error {
-	return nil
+	query := `DELETE FROM privilege WHERE id = ?`
+	_, err := s.DB.Exec(query, id)
+	return err
 }
