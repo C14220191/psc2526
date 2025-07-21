@@ -1,9 +1,15 @@
 package models
 
-import "time"
+import (
+    "database/sql"
+    
+)
 
 type Admin struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+    ID          uint           `json:"id_admin"`
+    Username    string         `json:"username"`
+    Password    string         `json:"-"` // Sembunyikan dari JSON
+    NamaLengkap string         `json:"nama_lengkap"`
+    Email       string         `json:"email"`
+    NoTelepon   sql.NullString `json:"no_telepon"`
 }

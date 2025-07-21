@@ -1,9 +1,13 @@
 package models
 
-import "time"
+import (
+    "time"
+)
 
 type Assessment struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
+	ID        uint      `json:"id"`
+	KasusID   uint      `json:"kasus_id"`
+	Jawaban   string    `json:"jawaban"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

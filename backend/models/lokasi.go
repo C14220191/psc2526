@@ -3,7 +3,13 @@ package models
 import "time"
 
 type Lokasi struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         uint      `json:"id"`
+	NamaLokasi string    `json:"nama_lokasi"`
+	Alamat     string    `json:"alamat"`
+	Latitude   float64   `json:"latitude"`
+	Longitude  float64   `json:"longitude"`
+	Tipe       string    `json:"tipe"`       // kantor, mitra, kasus, dll
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
+

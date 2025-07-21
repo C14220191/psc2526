@@ -2,8 +2,12 @@ package models
 
 import "time"
 
-type OtpStatus struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+type OTPStatus struct {
+	ID         uint      `json:"id"`
+	UserID     uint      `json:"user_id"`
+	KodeOTP    string    `json:"kode_otp"`
+	Status     string    `json:"status"`       // pending, verified, expired
+	TerkirimAt time.Time `json:"terkirim_at"`
+	ExpiredAt  time.Time `json:"expired_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
