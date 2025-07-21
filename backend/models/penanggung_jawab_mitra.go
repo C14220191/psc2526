@@ -4,7 +4,7 @@ import "time"
 
 type PenanggungJawabMitra struct {
 	ID        uint      `json:"id"`
-	MitraID   uint      `json:"mitra_id"`    // FK ke mitra
+	IDMitra uint   `json:"id_mitra"`
 	Nama      string    `json:"nama"`
 	Jabatan   string    `json:"jabatan"`
 	Kontak    string    `json:"kontak"`

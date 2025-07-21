@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type LogVerifikasiUser struct {
+type VerifikasiUser struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	WaktuPengajuan time.Time `json:"waktu_pengajuan"`
 	Status    string    `json:"status"` // pending, diterima, ditolak

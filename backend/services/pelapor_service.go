@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type PelaporService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewPelaporService(db *gorm.DB) *PelaporService {
+func NewPelaporService(db *sql.DB) *PelaporService {
 	return &PelaporService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *PelaporService) Create(data *models.Pelapor) error {
+	return nil
+}
+
+func (s *PelaporService) GetByID(id uint) (*models.Pelapor, error) {
+	return nil, nil
+}
+
+func (s *PelaporService) Update(data *models.Pelapor) error {
+	return nil
+}
+
+func (s *PelaporService) Delete(id uint) error {
+	return nil
+}

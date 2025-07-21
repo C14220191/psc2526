@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type PetugasService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewPetugasService(db *gorm.DB) *PetugasService {
+func NewPetugasService(db *sql.DB) *PetugasService {
 	return &PetugasService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *PetugasService) Create(data *models.Petugas) error {
+	return nil
+}
+
+func (s *PetugasService) GetByID(id uint) (*models.Petugas, error) {
+	return nil, nil
+}
+
+func (s *PetugasService) Update(data *models.Petugas) error {
+	return nil
+}
+
+func (s *PetugasService) Delete(id uint) error {
+	return nil
+}

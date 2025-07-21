@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type AssessmentService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewAssessmentService(db *gorm.DB) *AssessmentService {
+func NewAssessmentService(db *sql.DB) *AssessmentService {
 	return &AssessmentService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *AssessmentService) Create(data *models.Assessment) error {
+	return nil
+}
+
+func (s *AssessmentService) GetByID(id uint) (*models.Assessment, error) {
+	return nil, nil
+}
+
+func (s *AssessmentService) Update(data *models.Assessment) error {
+	return nil
+}
+
+func (s *AssessmentService) Delete(id uint) error {
+	return nil
+}

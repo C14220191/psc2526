@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type TindakanService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewTindakanService(db *gorm.DB) *TindakanService {
+func NewTindakanService(db *sql.DB) *TindakanService {
 	return &TindakanService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *TindakanService) Create(data *models.Tindakan) error {
+	return nil
+}
+
+func (s *TindakanService) GetByID(id uint) (*models.Tindakan, error) {
+	return nil, nil
+}
+
+func (s *TindakanService) Update(data *models.Tindakan) error {
+	return nil
+}
+
+func (s *TindakanService) Delete(id uint) error {
+	return nil
+}

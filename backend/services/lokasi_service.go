@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type LokasiService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewLokasiService(db *gorm.DB) *LokasiService {
+func NewLokasiService(db *sql.DB) *LokasiService {
 	return &LokasiService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *LokasiService) Create(data *models.Lokasi) error {
+	return nil
+}
+
+func (s *LokasiService) GetByID(id uint) (*models.Lokasi, error) {
+	return nil, nil
+}
+
+func (s *LokasiService) Update(data *models.Lokasi) error {
+	return nil
+}
+
+func (s *LokasiService) Delete(id uint) error {
+	return nil
+}

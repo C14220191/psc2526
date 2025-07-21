@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type RoleService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewRoleService(db *gorm.DB) *RoleService {
+func NewRoleService(db *sql.DB) *RoleService {
 	return &RoleService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *RoleService) Create(data *models.Role) error {
+	return nil
+}
+
+func (s *RoleService) GetByID(id uint) (*models.Role, error) {
+	return nil, nil
+}
+
+func (s *RoleService) Update(data *models.Role) error {
+	return nil
+}
+
+func (s *RoleService) Delete(id uint) error {
+	return nil
+}

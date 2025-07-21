@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type DetailPrivilegeRoleService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewDetailPrivilegeRoleService(db *gorm.DB) *DetailPrivilegeRoleService {
+func NewDetailPrivilegeRoleService(db *sql.DB) *DetailPrivilegeRoleService {
 	return &DetailPrivilegeRoleService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *DetailPrivilegeRoleService) Create(data *models.DetailPrivilegeRole) error {
+	return nil
+}
+
+func (s *DetailPrivilegeRoleService) GetByID(id uint) (*models.DetailPrivilegeRole, error) {
+	return nil, nil
+}
+
+func (s *DetailPrivilegeRoleService) Update(data *models.DetailPrivilegeRole) error {
+	return nil
+}
+
+func (s *DetailPrivilegeRoleService) Delete(id uint) error {
+	return nil
+}

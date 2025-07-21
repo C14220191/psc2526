@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type PertanyaanService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewPertanyaanService(db *gorm.DB) *PertanyaanService {
+func NewPertanyaanService(db *sql.DB) *PertanyaanService {
 	return &PertanyaanService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *PertanyaanService) Create(data *models.Pertanyaan) error {
+	return nil
+}
+
+func (s *PertanyaanService) GetByID(id uint) (*models.Pertanyaan, error) {
+	return nil, nil
+}
+
+func (s *PertanyaanService) Update(data *models.Pertanyaan) error {
+	return nil
+}
+
+func (s *PertanyaanService) Delete(id uint) error {
+	return nil
+}

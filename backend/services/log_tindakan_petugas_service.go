@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type LogTindakanPetugasService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewLogTindakanPetugasService(db *gorm.DB) *LogTindakanPetugasService {
+func NewLogTindakanPetugasService(db *sql.DB) *LogTindakanPetugasService {
 	return &LogTindakanPetugasService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *LogTindakanPetugasService) Create(data *models.LogTindakanPetugas) error {
+	return nil
+}
+
+func (s *LogTindakanPetugasService) GetByID(id uint) (*models.LogTindakanPetugas, error) {
+	return nil, nil
+}
+
+func (s *LogTindakanPetugasService) Update(data *models.LogTindakanPetugas) error {
+	return nil
+}
+
+func (s *LogTindakanPetugasService) Delete(id uint) error {
+	return nil
+}

@@ -1,16 +1,30 @@
 package services
 
 import (
-	"gorm.io/gorm"
-	"your_project/models"
+	"database/sql"
+	"backend/models"
 )
 
 type UserService struct {
-	DB *gorm.DB
+	DB *sql.DB
 }
 
-func NewUserService(db *gorm.DB) *UserService {
+func NewUserService(db *sql.DB) *UserService {
 	return &UserService{DB: db}
 }
 
-// Implement service methods like Create, GetByID, Update, Delete
+func (s *UserService) Create(data *models.User) error {
+	return nil
+}
+
+func (s *UserService) GetByID(id uint) (*models.User, error) {
+	return nil, nil
+}
+
+func (s *UserService) Update(data *models.User) error {
+	return nil
+}
+
+func (s *UserService) Delete(id uint) error {
+	return nil
+}
