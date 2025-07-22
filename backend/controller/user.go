@@ -1,84 +1,82 @@
 package controller
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-	"log"
 	"backend/interfaces"
 	"backend/models"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 type UserController struct {
-	UserServices interfaces.UserService
+	UserService interfaces.UserService
 }
 
-func (c *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
+func NewUserController(service interfaces.UserService) *UserController {
+	return &UserController{UserService: service}
+}
+
+func (uc *UserController) CreateUser(c echo.Context) error {
 	var user models.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+	if err := c.Bind(&user); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "invalid input"})
+	}
+	if err := uc.UserService.Create(&user); err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "create failed"})
+	}
+	return c.JSON(http.StatusCreated, user)
+}
+
+func (uc *UserController) GetUserByID(c echo.Context) error {
+	idStr := c.Param("id")
+	fmt.Printf("RAW ID STRING: [%q]\n", idStr)
+
+	id, err := strconv.Atoi(strings.TrimSpace(idStr))
+	if err != nil {
+		fmt.Println("Atoi ERROR:", err)
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid ID"})
 	}
 
-	if err := c.UserServices.Create(&user); err != nil {
-				log.Println("ERROR INSERT USER:", err)
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
-
-		return
+	user, err := uc.UserService.GetByID(id)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, echo.Map{"error": "user not found"})
+	}
+	return c.JSON(http.StatusOK, user)
 }
 
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
-}
-
-func (c *UserController) GetUserByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (uc *UserController) UpdateUser(c echo.Context) error {
+	idStr := strings.TrimSpace(c.Param("id")) // ✅ bersihkan newline/spasi
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid ID"})
 	}
 
-	user, err := c.UserServices.GetByID(uint(id))
-	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
-}
-
-func (c *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+	if err := c.Bind(&user); err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
 	}
 
-	if err := c.UserServices.Update(&user); err != nil {
-		http.Error(w, "Failed to update user", http.StatusInternalServerError)
-		return
+	user.ID = id // Set ID dari path ke objek user
+	if err := uc.UserService.Update(&user); err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Update failed"})
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	return c.JSON(http.StatusOK, user)
 }
 
-func (c *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (uc *UserController) DeleteUser(c echo.Context) error {
+	idStr := c.Param("id")
+	fmt.Printf("RAW ID FROM PATH: [%q]\n", idStr)
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid ID"})
 	}
 
-	if err := c.UserServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
-		return
+	if err := uc.UserService.Delete(id); err != nil {
+		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "delete failed"})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("User deleted successfully"))
+	return c.JSON(http.StatusOK, echo.Map{"message": "user deleted"})
 }

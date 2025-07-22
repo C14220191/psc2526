@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"backend/models"
+	 "fmt"
 )
 
 type UserService struct {
@@ -25,25 +26,33 @@ func (s *UserService) Create(data *models.User) error {
 	return err
 }
 
-func (s *UserService) GetByID(id uint) (*models.User, error) {
-	query := `SELECT id, username, password, nama_lengkap, nik, no_telepon, alamat, kota, jenis_kelamin, tanggal_lahir, status, otp_status, created_at, updated_at FROM user WHERE id = ?`
+func (s *UserService) GetByID(id int) (*models.User, error) {
+	query := `SELECT id, username, password, nama_lengkap, nik, no_telepon, alamat, kota, jenis_kelamin, tanggal_lahir, status, otp_status, created_at, updated_at, deleted_at FROM user WHERE id = ?`
+	
 	row := s.DB.QueryRow(query, id)
+
 	var result models.User
 	err := row.Scan(
 		&result.ID, &result.Username, &result.Password, &result.NamaLengkap, &result.NIK,
 		&result.NoTelepon, &result.Alamat, &result.Kota, &result.JenisKelamin, &result.TanggalLahir,
-		&result.Status, &result.OTPStatus, &result.CreatedAt, &result.UpdatedAt,
+		&result.Status, &result.OTPStatus, &result.CreatedAt, &result.UpdatedAt, &result.DeletedAt,
 	)
+	
 	if err != nil {
+		// 👇 Tambahkan log error biar kelihatan masalahnya
+		fmt.Println("ERROR GET USER:", err)
 		return nil, err
 	}
+
 	return &result, nil
 }
+
 
 func (s *UserService) Update(data *models.User) error {
 	query := `UPDATE user SET 
 	username = ?, password = ?, nama_lengkap = ?, nik = ?, no_telepon = ?, alamat = ?, kota = ?, jenis_kelamin = ?, tanggal_lahir = ?, status = ?, otp_status = ?, updated_at = ?
 	WHERE id = ?`
+
 	_, err := s.DB.Exec(query,
 		data.Username, data.Password, data.NamaLengkap, data.NIK, data.NoTelepon,
 		data.Alamat, data.Kota, data.JenisKelamin, data.TanggalLahir, data.Status,
@@ -52,8 +61,10 @@ func (s *UserService) Update(data *models.User) error {
 	return err
 }
 
-func (s *UserService) Delete(id uint) error {
+
+func (s *UserService) Delete(id int) error {
 	query := `DELETE FROM user WHERE id = ?`
 	_, err := s.DB.Exec(query, id)
 	return err
 }
+

@@ -1,18 +1,19 @@
 package router
 
 import (
-	"net/http"
 	"backend/controller"
 	"backend/services"
 	"database/sql"
+
+	"github.com/labstack/echo/v4"
 )
 
-func RegisterUserRoutes(db *sql.DB) {
+func RegisterUserRoutes(e *echo.Echo, db *sql.DB) {
 	userService := services.NewUserService(db)
-	userController := &controller.UserController{UserServices: userService}
+	userController := controller.NewUserController(userService)
 
-	http.HandleFunc("/user/create", userController.CreateUser)
-	http.HandleFunc("/user/get", userController.GetUserByID)
-	http.HandleFunc("/user/update", userController.UpdateUser)
-	http.HandleFunc("/user/delete", userController.DeleteUser)
+	e.POST("/user", userController.CreateUser)
+	e.GET("/user/:id", userController.GetUserByID)
+	e.PUT("/user/:id", userController.UpdateUser)
+	e.DELETE("/user/:id", userController.DeleteUser)
 }
