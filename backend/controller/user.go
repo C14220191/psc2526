@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-
+	"log"
 	"backend/interfaces"
 	"backend/models"
 )
@@ -21,9 +21,12 @@ func (c *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := c.UserServices.Create(&user); err != nil {
+				log.Println("ERROR INSERT USER:", err)
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+
 		return
-	}
+}
+
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
