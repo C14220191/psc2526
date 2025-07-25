@@ -7,26 +7,43 @@ import (
 
 	"backend/interfaces"
 	"backend/models"
+
+	"github.com/labstack/echo/v4"
 )
 
 type AdminController struct {
-	AdminServices interfaces.AdminService
+	AdminServices interfaces.AdminInterface
 }
 
-func (c *AdminController) CreateAdmin(w http.ResponseWriter, r *http.Request) {
-	var admin models.Admin
-	if err := json.NewDecoder(r.Body).Decode(&admin); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+func NewAdminController(adminServices interfaces.AdminInterface) *AdminController {
+	return &AdminController{
+		AdminServices: adminServices,
+	}
+}
+
+func (cc *AdminController) Create(c echo.Context) error {
+	var data models.AdminCreate
+	if err := c.Bind(&data); err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "unprocessable request",
+			Data:       nil,
+		})
 	}
 
-	if err := c.AdminServices.Create(&admin); err != nil {
-		http.Error(w, "Failed to create admin", http.StatusInternalServerError)
-		return
+	if err := c.Validate(&data); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
+			"status_code": http.StatusBadRequest,
+			"message":     "Validation failed",
+		})
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(admin)
+	result, err := cc.AdminServices.Create(c.Request().Context(), &data)
+	if err != nil {
+		return echo.NewHTTPError(result.StatusCode, result)
+	}
+
+	return c.JSON(result.StatusCode, result)
 }
 
 func (c *AdminController) GetAdminByID(w http.ResponseWriter, r *http.Request) {

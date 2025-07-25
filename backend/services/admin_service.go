@@ -1,28 +1,75 @@
 package services
 
 import (
-	"database/sql"
+	"backend/interfaces"
 	"backend/models"
+	"context"
+	"database/sql"
+	"net/http"
 )
 
 type AdminService struct {
 	DB *sql.DB
+	_cfg any
 }
 
+var _ interfaces.AdminInterface = &AdminService{}
 func NewAdminService(db *sql.DB) *AdminService {
 	return &AdminService{DB: db}
 }
 
-func (s *AdminService) Create(data *models.Admin) error {
+func (s *AdminService) Create(ctx context.Context, data *models.AdminCreate) (*models.Response, error) {
+	var res models.Response
+
+	tx, err := s.DB.BeginTx(ctx, &sql.TxOptions{})
+
+	if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to begin transaction"
+		res.Data = nil
+		return nil, nil
+	}
+
 	query := `
-		INSERT INTO admin (username, password, nama_lengkap, email, no_telepon, id_role, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := s.DB.Exec(query,
+		INSERT INTO admin (username, password, nama_lengkap, email, no_telepon, id_role)
+		VALUES (?, ?, ?, ?, ?, ?)`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		tx.Rollback()
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to prepare statement"
+		res.Data = nil
+		return &res, nil
+	}
+	defer stmt.Close()
+
+
+	result, err := s.DB.ExecContext(ctx, query,
 		data.Username, data.Password, data.NamaLengkap,
-		data.Email, data.NoTelepon, data.IDRole,
-		data.CreatedAt, data.UpdatedAt,
-	)
-	return err
+		data.Email, data.NoTelepon, data.IDRole,)
+
+	if err != nil {
+		tx.Rollback()
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to execute query"
+		res.Data = nil
+		return &res, nil
+	}
+
+	lastID, _ := result.LastInsertId()
+
+	if err := tx.Commit(); err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to commit transaction"
+		res.Data = nil
+		return &res, nil
+	}
+
+	res.StatusCode = http.StatusCreated
+	res.Message = "Admin created successfully"
+	res.Data = lastID
+	return &res, nil
 }
 
 func (s *AdminService) GetByID(id uint) (*models.Admin, error) {

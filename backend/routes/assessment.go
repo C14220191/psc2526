@@ -1,8 +1,11 @@
 package routes
+
 import (
-	"net/http"
-	"github.com/labstack/echo/v4"
 	"backend/controller"
+	"backend/services"
+	"net/http"
+	"database/sql"
+	"github.com/labstack/echo/v4"
 )
 
 func Init() *echo.Echo {
@@ -17,9 +20,12 @@ func Init() *echo.Echo {
 	return e
 }
 
-func RegisterAssessmentRoutes(e *echo.Echo, c *controller.AssessmentController) {
-	e.POST("/assessment", c.CreateAssessment)
-	e.GET("/assessment/:id", c.GetAssessmentByID)
-	e.PUT("/assessment/:id", c.UpdateAssessment)
-	e.DELETE("/assessment/:id", c.DeleteAssessment)
+func RegisterAssessmentRoutes(e *echo.Echo, db *sql.DB) {
+	assessmentService := services.NewAssessmentService(db)
+	assessmentController := controller.NewAssessmentController(assessmentService)
+
+	e.POST("/assessment", assessmentController.CreateAssessment)
+	e.GET("/assessment/:id", assessmentController.GetAssessmentByID)
+	e.PUT("/assessment/:id", assessmentController.UpdateAssessment)
+	e.DELETE("/assessment/:id", assessmentController.DeleteAssessment)
 }

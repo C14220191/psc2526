@@ -6,15 +6,23 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
+	"fmt"
 )
 
 type AssessmentController struct {
 	AssessmentServices interfaces.AssessmentService
 }
+func NewAssessmentController(assessmentService interfaces.AssessmentService) *AssessmentController {
+	return &AssessmentController{
+		AssessmentServices: assessmentService,
+	}
+}
+
 
 func (c *AssessmentController) CreateAssessment(ctx echo.Context) error {
 	var assessment models.Assessment
 	if err := ctx.Bind(&assessment); err != nil {
+		fmt.Println("Bind error:", err)
 		return ctx.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
 	}
 	if err := c.AssessmentServices.Create(&assessment); err != nil {

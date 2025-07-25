@@ -14,7 +14,7 @@ func NewAssessmentService(db *sql.DB) *AssessmentService {
 }
 
 func (s *AssessmentService) Create(data *models.Assessment) error {
-	query := `INSERT INTO assessment (kasus_id, jawaban, created_at, updated_at) VALUES (?, ?, ?, ?)`
+	query := `INSERT INTO assessment (kasus_id, jawaban, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`
 	_, err := s.DB.Exec(query, data.KasusID, data.Jawaban, data.CreatedAt, data.UpdatedAt)
 	return err
 }

@@ -1,10 +1,12 @@
 package db
 
 import (
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
 	"backend/config"
+	"database/sql"
 	"fmt"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
@@ -17,6 +19,11 @@ func Init() {
 	fmt.Println("Connection string:", connectionString)
 	db, err = sql.Open("mysql", connectionString)
 
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(time.Second * 5)
+
+
 	if err != nil {
 		panic("connectionString error...")
 	}
@@ -28,4 +35,12 @@ func Init() {
 }
 func CreateCon() *sql.DB {
 	return db
+}
+func Close() {
+	if db != nil {
+		err = db.Close()
+		if err != nil {
+			fmt.Println("Error closing database connection:", err)
+		}
+	}
 }

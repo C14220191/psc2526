@@ -16,3 +16,13 @@ type Admin struct {
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 }
+
+type AdminCreate struct {
+	Username   string         `json:"username"`
+	Password   string         `json:"password"`
+	NamaLengkap string        `json:"nama_lengkap"`
+	Email      string         `json:"email"`
+	NoTelepon  sql.NullString `json:"no_telepon"`
+	IDRole     uint           `json:"id_role"`
+}
+
