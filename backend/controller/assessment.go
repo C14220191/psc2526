@@ -1,81 +1,64 @@
 package controller
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-
 	"backend/interfaces"
 	"backend/models"
+	"github.com/labstack/echo/v4"
+	"net/http"
+	"strconv"
 )
 
 type AssessmentController struct {
 	AssessmentServices interfaces.AssessmentService
 }
 
-func (c *AssessmentController) CreateAssessment(w http.ResponseWriter, r *http.Request) {
+func (c *AssessmentController) CreateAssessment(ctx echo.Context) error {
 	var assessment models.Assessment
-	if err := json.NewDecoder(r.Body).Decode(&assessment); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+	if err := ctx.Bind(&assessment); err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
 	}
-
 	if err := c.AssessmentServices.Create(&assessment); err != nil {
-		http.Error(w, "Failed to create assessment", http.StatusInternalServerError)
-		return
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to create assessment"})
 	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(assessment)
+	return ctx.JSON(http.StatusCreated, assessment)
 }
 
-func (c *AssessmentController) GetAssessmentByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
+func (c *AssessmentController) GetAssessmentByID(ctx echo.Context) error {
+	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid ID"})
 	}
-
 	assessment, err := c.AssessmentServices.GetByID(uint(id))
 	if err != nil {
-		http.Error(w, "Assessment not found", http.StatusNotFound)
-		return
+		return ctx.JSON(http.StatusNotFound, echo.Map{"error": "Assessment not found"})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(assessment)
+	return ctx.JSON(http.StatusOK, assessment)
 }
 
-func (c *AssessmentController) UpdateAssessment(w http.ResponseWriter, r *http.Request) {
-	var assessment models.Assessment
-	if err := json.NewDecoder(r.Body).Decode(&assessment); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+func (c *AssessmentController) UpdateAssessment(ctx echo.Context) error {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid ID"})
 	}
+	var assessment models.Assessment
+	if err := ctx.Bind(&assessment); err != nil {
+		return ctx.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
+	}
+	assessment.ID = uint(id)
 
 	if err := c.AssessmentServices.Update(&assessment); err != nil {
-		http.Error(w, "Failed to update assessment", http.StatusInternalServerError)
-		return
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to update assessment"})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(assessment)
+	return ctx.JSON(http.StatusOK, assessment)
 }
 
-func (c *AssessmentController) DeleteAssessment(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
+func (c *AssessmentController) DeleteAssessment(ctx echo.Context) error {
+	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid ID"})
 	}
-
 	if err := c.AssessmentServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete assessment", http.StatusInternalServerError)
-		return
+		return ctx.JSON(http.StatusInternalServerError, echo.Map{"error": "Failed to delete assessment"})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Assessment deleted successfully"))
+	return ctx.String(http.StatusOK, "Assessment deleted successfully")
 }

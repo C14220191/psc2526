@@ -10,4 +10,5 @@ type Assessment struct {
 	Jawaban   string    `json:"jawaban"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
 }

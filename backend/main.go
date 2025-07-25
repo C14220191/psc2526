@@ -1,25 +1,29 @@
 package main
 
 import (
-	"backend/router"
-	"database/sql"
-	"log"
-	
+	"backend/db"
 
-	"github.com/labstack/echo/v4"
 	_ "github.com/go-sql-driver/mysql"
+	"backend/routes"
 )
 
 func main() {
-	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/psc_db")
-	if err != nil {
-		log.Fatal("DB connection failed:", err)
-	}
-	defer db.Close()
+	// // Ganti ini dengan info koneksi database kamu
+	// dsn := "root:@tcp(127.0.0.1:3306)/psc_db?parseTime=true"
 
-	e := echo.New()
-	router.RegisterUserRoutes(e, db)
+	// db, err := sql.Open("mysql", dsn)
+	// if err != nil {
+	// 	log.Fatal("Failed to connect to database:", err)
+	// }
+	// defer db.Close()
 
-	log.Println("Server running at http://localhost:8080")
+	// // Registrasi route
+	// router.RegisterUserRoutes(db)
+
+	// // Start server
+	// log.Println("Server running at http://localhost:8080")
+	// log.Fatal(http.ListenAndServe(":8080", nil))
+	db.Init()
+	e := routes.
 	e.Logger.Fatal(e.Start(":8080"))
 }
