@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"strings"
 )
 
 type AdminService struct {
@@ -18,6 +19,94 @@ func NewAdminService(db *sql.DB) *AdminService {
 	return &AdminService{DB: db}
 }
 
+func (s *AdminService) GetAll(ctx context.Context, filter *models.AdminFilter) (*models.Response, error) {
+	var res models.Response
+	var totalSize int64
+	arr := []*models.Admin{}
+
+	query := `select * from admin`
+
+	mQuery := `select count(id) as sample from admin`
+
+	var sqlFilters []string
+	var sqlVars []any
+
+
+	if filter.Username != "" {
+		sqlFilters = append(sqlFilters, "username LIKE ?")
+		sqlVars = append(sqlVars, "%"+filter.Username+"%")
+	}
+	if filter.NamaLengkap != "" {
+		sqlFilters = append(sqlFilters, "nama_lengkap LIKE ?")
+		sqlVars = append(sqlVars, "%"+filter.NamaLengkap+"%")
+	}
+	if filter.Email != "" {
+		sqlFilters = append(sqlFilters, "email LIKE ?")
+		sqlVars = append(sqlVars, "%"+filter.Email+"%")
+	}
+	if filter.NoTelepon != "" {
+		sqlFilters = append(sqlFilters, "no_telepon LIKE ?")
+		sqlVars = append(sqlVars, "%"+filter.NoTelepon+"%")
+	}
+	if filter.IDRole != 0 {
+		sqlFilters = append(sqlFilters, "id_role = ?")
+		sqlVars = append(sqlVars, filter.IDRole)
+	}
+
+	if len(sqlFilters) > 0 {
+		query += " WHERE "
+		mQuery += " WHERE "
+		for _, item := range sqlFilters {
+			query += item + " AND"
+			mQuery += item + " AND"
+		}
+		query = strings.TrimSuffix(query, " AND")
+		mQuery = strings.TrimSuffix(mQuery, " AND")
+	}
+
+	rows := s.DB.QueryRowContext(ctx, mQuery, sqlVars...)
+	if err := rows.Scan(&totalSize); err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to get total records"
+		res.Data = nil
+		return &res, nil
+	}
+
+	// Setelah query filter ditambahkan
+	query += " LIMIT ? OFFSET ?"
+	offset := (filter.PageNumber - 1) * filter.PageSize
+	sqlVars = append(sqlVars, filter.PageSize, offset)
+
+
+	result, err := s.DB.QueryContext(ctx, query, sqlVars...)
+	if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "internal server error"
+		res.Data = nil
+		return &res, err
+	}
+	defer result.Close()
+	
+	for result.Next() {
+		var admin models.Admin
+		if err := result.Scan(
+			&admin.ID, &admin.Username, &admin.Password,
+			&admin.NamaLengkap, &admin.Email, &admin.NoTelepon,
+			&admin.IDRole, &admin.CreatedAt, &admin.UpdatedAt,
+		); err != nil {
+			res.StatusCode = http.StatusInternalServerError
+			res.Message = "Failed to scan admin data"
+			res.Data = nil
+			return &res, err
+		}
+		arr = append(arr, &admin)
+	}
+	res.StatusCode = http.StatusOK
+	res.Message = "Success"
+	res.Data = arr
+	return &res, nil
+}
+	
 func (s *AdminService) Create(ctx context.Context, data *models.AdminCreate) (*models.Response, error) {
 	var res models.Response
 
@@ -103,7 +192,7 @@ func (s *AdminService) Update(data *models.Admin) error {
 }
 
 func (s *AdminService) Delete(id uint) error {
-	query := `DELETE FROM admin WHERE id = ?`
+	query := `UPDATE admin SET deleted_at = NOW() WHERE id = ?`
 	_, err := s.DB.Exec(query, id)
 	return err
 }

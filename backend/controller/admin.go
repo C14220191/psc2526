@@ -21,6 +21,30 @@ func NewAdminController(adminServices interfaces.AdminInterface) *AdminControlle
 	}
 }
 
+func (cc *AdminController) GetAll(c echo.Context) error {
+	var filter models.AdminFilter
+	
+	if err := c.Bind(&filter); err != nil {
+		return c.JSON(http.StatusUnprocessableEntity, models.Response{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "unprocessable request",
+			Data:       nil,
+		})
+	}
+
+	if err := c.Validate(&filter); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
+			"status_code": http.StatusBadRequest,
+			"message":     "Validation failed",
+		})
+	}
+	result, err := cc.AdminServices.GetAll(c.Request().Context(), &filter)
+	if err != nil {
+		return echo.NewHTTPError(result.StatusCode, result)
+	}
+	return c.JSON(result.StatusCode, result)
+}
+
 func (cc *AdminController) Create(c echo.Context) error {
 	var data models.AdminCreate
 	if err := c.Bind(&data); err != nil {
@@ -31,10 +55,11 @@ func (cc *AdminController) Create(c echo.Context) error {
 		})
 	}
 
-	if err := c.Validate(&data); err != nil {
+	if err := c.Validate(data); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
 			"status_code": http.StatusBadRequest,
 			"message":     "Validation failed",
+			"errors":     err.Error(),
 		})
 	}
 
@@ -80,19 +105,21 @@ func (c *AdminController) UpdateAdmin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(admin)
 }
 
-func (c *AdminController) DeleteAdmin(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (cc *AdminController) DeleteAdmin(c echo.Context) error {
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
-	if err := c.AdminServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete admin", http.StatusInternalServerError)
-		return
+	err = cc.AdminServices.Delete(uint(id))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete admin")
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Admin deleted successfully"))
+	return c.JSON(http.StatusOK, models.Response{
+		StatusCode: http.StatusOK,
+		Message:    "Admin deleted successfully",
+		Data:       nil,
+	})
 }
