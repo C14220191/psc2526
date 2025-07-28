@@ -15,7 +15,7 @@ var err error
 func Init() {
 	conf := config.GetConfig()
 
-	connectionString := conf.DB_USERNAME + ":" + conf.DB_PASSWORD + "@tcp(" + conf.DB_HOST + ":" + conf.DB_PORT + ")/" + conf.DB_NAME + "?parseTime=true"
+	connectionString := conf.DB_USERNAME + ":" + conf.DB_PASSWORD + "@tcp(" + conf.DB_HOST + ":" + conf.DB_PORT + ")/" + conf.DB_NAME + "?parseTime=true&loc=Asia%2FJakarta"
 	fmt.Println("Connection string:", connectionString)
 	db, err = sql.Open("mysql", connectionString)
 

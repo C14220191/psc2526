@@ -26,6 +26,7 @@ func RegisterAssessmentRoutes(e *echo.Echo, db *sql.DB) {
 
 	e.POST("/assessment", assessmentController.CreateAssessment)
 	e.GET("/assessment/:id", assessmentController.GetAssessmentByID)
+	e.GET("/assessment", assessmentController.GetAllAssessments)
 	e.PUT("/assessment/:id", assessmentController.UpdateAssessment)
 	e.DELETE("/assessment/:id", assessmentController.DeleteAssessment)
 }
