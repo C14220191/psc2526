@@ -1,81 +1,147 @@
 package controller
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"backend/interfaces"
 	"backend/models"
+
+	"github.com/labstack/echo/v4"
 )
 
 type BeritaController struct {
-	BeritaServices interfaces.BeritaService
+	BeritaInterfaces interfaces.BeritaInterface
 }
 
-func (c *BeritaController) CreateBerita(w http.ResponseWriter, r *http.Request) {
-	var berita models.Berita
-	if err := json.NewDecoder(r.Body).Decode(&berita); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
-
-	if err := c.BeritaServices.Create(&berita); err != nil {
-		http.Error(w, "Failed to create berita", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(berita)
+func NewBeritaController(beritaInterfaces interfaces.BeritaInterface) *BeritaController {
+	return &BeritaController{BeritaInterfaces: beritaInterfaces}
 }
 
-func (c *BeritaController) GetBeritaByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (cc *BeritaController) CreateBerita(c echo.Context) error {
+	var berita models.BeritaCreate
+	if err := c.Bind(&berita); err != nil {
+		return c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid request",
+			Data:       nil,
+		})
+	}
+
+	err := c.Validate(&berita)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Validation failed",
+			Data:       nil,
+		})
+	}
+
+	response, err := cc.BeritaInterfaces.Create(&berita, c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"status":  http.StatusInternalServerError,
+			"message": "Failed to create berita",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+	}
+	return c.JSON(http.StatusCreated, response)
+}
+
+func (cc *BeritaController) GetBeritaByID(c echo.Context) error {
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return c.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+			Data:       nil,
+		})
 	}
 
-	berita, err := c.BeritaServices.GetByID(uint(id))
+	response, err := cc.BeritaInterfaces.GetByID(uint(id), c.Request().Context())
 	if err != nil {
-		http.Error(w, "Berita not found", http.StatusNotFound)
-		return
+		return c.JSON(http.StatusNotFound, response)
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(berita)
+	return c.JSON(http.StatusOK, response)
 }
 
-func (c *BeritaController) UpdateBerita(w http.ResponseWriter, r *http.Request) {
-	var berita models.Berita
-	if err := json.NewDecoder(r.Body).Decode(&berita); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+func (cc *BeritaController) UpdateBerita(c echo.Context) error {
+	idstr := c.Param("id")
+	id, err := strconv.Atoi(idstr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"status":  http.StatusBadRequest,
+			"message": "Invalid ID",
+			"data":    nil,
+		})
+		return err
 	}
 
-	if err := c.BeritaServices.Update(&berita); err != nil {
-		http.Error(w, "Failed to update berita", http.StatusInternalServerError)
-		return
+	fmt.Println("berhasil ambil id")
+	var berita models.BeritaUpdate
+	fmt.Println("berhasil bind berita")
+	if err := c.Bind(&berita); err != nil {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"status":  http.StatusBadRequest,
+			"message": "Invalid request",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+		return err
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(berita)
+	err = c.Validate(&berita)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"status":  http.StatusBadRequest,
+			"message": "Validation failed",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+		return err
+	}
+
+	response, err := cc.BeritaInterfaces.Update(&berita, c.Request().Context(), uint(id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"status":  http.StatusInternalServerError,
+			"message": "Failed to update berita",
+			"data":    nil,
+			"error":   err.Error(),
+		})
+		return err
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
-func (c *BeritaController) DeleteBerita(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (cc *BeritaController) DeleteBerita(c echo.Context) error {
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"status":  http.StatusBadRequest,
+			"message": "Invalid ID",
+			"data":    nil,
+		})
 	}
 
-	if err := c.BeritaServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete berita", http.StatusInternalServerError)
-		return
+	response, err := cc.BeritaInterfaces.Delete(uint(id), c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"status":  http.StatusInternalServerError,
+			"message": "Failed to delete berita",
+			"data":    nil,
+			"error":   err.Error(),
+		})
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Berita deleted successfully"))
+	response.StatusCode = http.StatusOK
+	response.Message = "Berita deleted successfully"
+	response.Data = nil
+
+	return c.JSON(http.StatusOK, response)
 }

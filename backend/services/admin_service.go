@@ -247,7 +247,14 @@ func (s *AdminService) Update(ctx context.Context, data *models.AdminUpdate) (*m
 		res.Data = nil
 		return &res, err
 	}
-
+	if rowsAffected == 0 {
+		tx.Rollback()
+		res.StatusCode = http.StatusNotFound
+		res.Message = "Admin not found"
+		res.Data = nil
+		return &res, nil
+	}
+	
 	if err := tx.Commit(); err != nil {
 		res.StatusCode = http.StatusInternalServerError
 		res.Message = "Failed to commit transaction"
