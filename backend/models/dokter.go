@@ -1,15 +1,44 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Dokter struct {
-	ID            uint      `json:"id"`
-	Nama          string    `json:"nama"`
-	Spesialisasi  string    `json:"spesialisasi"`   // Umum, Bedah, dll
-	FaskesID      uint      `json:"faskes_id"`       // FK ke FasilitasKesehatan
-	NoSTR         string    `json:"no_str"`          // Nomor STR
-	JenisKelamin  string    `json:"jenis_kelamin"`   // Laki-laki, Perempua
-	Kontak        string    `json:"kontak"`          // No HP
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID           uint           `json:"id_dokter"`
+	Nama         string         `json:"nama"`
+	Bidang       sql.NullString `json:"bidang"`
+	NoHP         sql.NullString `json:"no_hp"`
+	JenisKelamin sql.NullString `json:"jenis_kelamin"`
+	IDFaskes     uint           `json:"id_faskes"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    *time.Time     `json:"deleted_at,omitempty"`
+}
+
+type DokterCreate struct {
+	Nama         string `json:"nama" validate:"required"`
+	Bidang       string `json:"bidang"`
+	NoHP         string `json:"no_hp"`
+	JenisKelamin string `json:"jenis_kelamin"`
+	IDFaskes     uint   `json:"id_faskes" validate:"required"`
+}
+
+type DokterUpdate struct {
+	ID           uint   `json:"id" validate:"required"`
+	Nama         string `json:"nama" validate:"required"`
+	Bidang       string `json:"bidang"`
+	NoHP         string `json:"no_hp"`
+	JenisKelamin string `json:"jenis_kelamin"`
+	IDFaskes     uint   `json:"id_faskes" validate:"required"`
+}
+
+type DokterFilter struct {
+	PaginationFilter
+	Nama         string `json:"nama,omitempty"`
+	Bidang       string `json:"bidang,omitempty"`
+	NoHP         string `json:"no_hp,omitempty"`
+	JenisKelamin string `json:"jenis_kelamin,omitempty"`
+	IDFaskes     uint   `json:"id_faskes,omitempty"`
 }

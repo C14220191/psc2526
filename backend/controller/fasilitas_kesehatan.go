@@ -1,81 +1,109 @@
 package controller
 
 import (
-	"encoding/json"
+	"backend/interfaces"
+	"backend/models"
 	"net/http"
 	"strconv"
 
-	"backend/interfaces"
-	"backend/models"
+	"github.com/labstack/echo/v4"
 )
 
 type FasilitasKesehatanController struct {
-	FasilitasKesehatanServices interfaces.FasilitasKesehatanService
+	FasilitasService interfaces.FasilitasKesehatanInterface
 }
 
-func (c *FasilitasKesehatanController) CreateFasilitasKesehatan(w http.ResponseWriter, r *http.Request) {
-	var fasilitas models.FasilitasKesehatan
-	if err := json.NewDecoder(r.Body).Decode(&fasilitas); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
-
-	if err := c.FasilitasKesehatanServices.Create(&fasilitas); err != nil {
-		http.Error(w, "Failed to create fasilitas kesehatan", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(fasilitas)
+func NewFasilitasKesehatanController(s interfaces.FasilitasKesehatanInterface) *FasilitasKesehatanController {
+	return &FasilitasKesehatanController{FasilitasService: s}
 }
 
-func (c *FasilitasKesehatanController) GetFasilitasKesehatanByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *FasilitasKesehatanController) Create(ctx echo.Context) error {
+	var data models.FasilitasKesehatanCreate
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+			Data:       nil,
+		})
+	}
+	result, err := c.FasilitasService.Create(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *FasilitasKesehatanController) GetAll(ctx echo.Context) error {
+	var filter models.FasilitasKesehatanFilter
+	if err := ctx.Bind(&filter); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid filter parameters",
+			Data:       nil,
+		})
+	}
+	result, err := c.FasilitasService.GetAll(ctx.Request().Context(), &filter)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *FasilitasKesehatanController) GetByID(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+			Data:       nil,
+		})
 	}
-
-	fasilitas, err := c.FasilitasKesehatanServices.GetByID(uint(id))
-	if err != nil {
-		http.Error(w, "Fasilitas Kesehatan not found", http.StatusNotFound)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(fasilitas)
-}
-
-func (c *FasilitasKesehatanController) UpdateFasilitasKesehatan(w http.ResponseWriter, r *http.Request) {
 	var fasilitas models.FasilitasKesehatan
-	if err := json.NewDecoder(r.Body).Decode(&fasilitas); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+	result, err := c.FasilitasService.GetByID(ctx.Request().Context(), &fasilitas, uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
 	}
-
-	if err := c.FasilitasKesehatanServices.Update(&fasilitas); err != nil {
-		http.Error(w, "Failed to update fasilitas kesehatan", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(fasilitas)
+	return ctx.JSON(result.StatusCode, result)
 }
 
-func (c *FasilitasKesehatanController) DeleteFasilitasKesehatan(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *FasilitasKesehatanController) Update(ctx echo.Context) error {
+	var data models.FasilitasKesehatanUpdate
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+			Data:       nil,
+		})
+	}
+	result, err := c.FasilitasService.Update(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *FasilitasKesehatanController) Delete(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+			Data:       nil,
+		})
 	}
-
-	if err := c.FasilitasKesehatanServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete fasilitas kesehatan", http.StatusInternalServerError)
-		return
+	err = c.FasilitasService.Delete(uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, models.Response{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete fasilitas kesehatan",
+			Data:       nil,
+		})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Fasilitas Kesehatan deleted successfully"))
+	return ctx.JSON(http.StatusOK, models.Response{
+		StatusCode: http.StatusOK,
+		Message:    "Fasilitas Kesehatan deleted successfully",
+		Data:       nil,
+	})
 }

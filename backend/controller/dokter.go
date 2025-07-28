@@ -1,81 +1,112 @@
 package controller
 
 import (
-	"encoding/json"
+	"backend/interfaces"
+	"backend/models"
 	"net/http"
 	"strconv"
 
-	"backend/interfaces"
-	"backend/models"
+	"github.com/labstack/echo/v4"
 )
 
 type DokterController struct {
-	DokterServices interfaces.DokterService
+	DokterService interfaces.DokterInterface
 }
 
-func (c *DokterController) CreateDokter(w http.ResponseWriter, r *http.Request) {
-	var dokter models.Dokter
-	if err := json.NewDecoder(r.Body).Decode(&dokter); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+func NewDokterController(s interfaces.DokterInterface) *DokterController {
+	return &DokterController{
+		DokterService: s,
 	}
-
-	if err := c.DokterServices.Create(&dokter); err != nil {
-		http.Error(w, "Failed to create dokter", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(dokter)
 }
 
-func (c *DokterController) GetDokterByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *DokterController) Create(ctx echo.Context) error {
+	var data models.DokterCreate
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+			Data:       nil,
+		})
+	}
+
+	result, err := c.DokterService.Create(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *DokterController) GetAll(ctx echo.Context) error {
+	var filter models.DokterFilter
+	if err := ctx.Bind(&filter); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid filter parameters",
+			Data:       nil,
+		})
+	}
+	result, err := c.DokterService.GetAll(ctx.Request().Context(), &filter)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *DokterController) GetByID(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+			Data:       nil,
+		})
 	}
-
-	dokter, err := c.DokterServices.GetByID(uint(id))
-	if err != nil {
-		http.Error(w, "Dokter not found", http.StatusNotFound)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dokter)
-}
-
-func (c *DokterController) UpdateDokter(w http.ResponseWriter, r *http.Request) {
 	var dokter models.Dokter
-	if err := json.NewDecoder(r.Body).Decode(&dokter); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+	result, err := c.DokterService.GetByID(ctx.Request().Context(), &dokter, uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
 	}
-
-	if err := c.DokterServices.Update(&dokter); err != nil {
-		http.Error(w, "Failed to update dokter", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dokter)
+	return ctx.JSON(result.StatusCode, result)
 }
 
-func (c *DokterController) DeleteDokter(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *DokterController) Update(ctx echo.Context) error {
+	var data models.DokterUpdate
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+			Data:       nil,
+		})
+	}
+	result, err := c.DokterService.Update(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *DokterController) Delete(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+			Data:       nil,
+		})
 	}
-
-	if err := c.DokterServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete dokter", http.StatusInternalServerError)
-		return
+	err = c.DokterService.Delete(uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, models.Response{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete dokter",
+			Data:       nil,
+		})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Dokter deleted successfully"))
+	return ctx.JSON(http.StatusOK, models.Response{
+		StatusCode: http.StatusOK,
+		Message:    "Dokter deleted successfully",
+		Data:       nil,
+	})
 }

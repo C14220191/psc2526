@@ -1,81 +1,68 @@
 package controller
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-
 	"backend/interfaces"
 	"backend/models"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
 type KategoriKasusController struct {
-	KategoriKasusServices interfaces.KategoriKasusService
+	KategoriKasusService interfaces.KategoriKasusInterface
 }
 
-func (c *KategoriKasusController) CreateKategoriKasus(w http.ResponseWriter, r *http.Request) {
-	var kategoriKasus models.KategoriKasus
-	if err := json.NewDecoder(r.Body).Decode(&kategoriKasus); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
-
-	if err := c.KategoriKasusServices.Create(&kategoriKasus); err != nil {
-		http.Error(w, "Failed to create kategori kasus", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(kategoriKasus)
+func NewKategoriKasusController(s interfaces.KategoriKasusInterface) *KategoriKasusController {
+	return &KategoriKasusController{KategoriKasusService: s}
 }
 
-func (c *KategoriKasusController) GetKategoriKasusByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *KategoriKasusController) Create(ctx echo.Context) error {
+	var data models.KategoriKasus
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Invalid input")
+	}
+	data.CreatedAt = time.Now()
+	data.UpdatedAt = time.Now()
+	if err := c.KategoriKasusService.Create(&data); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, "Failed to create kategori kasus")
+	}
+	return ctx.JSON(http.StatusCreated, data)
+}
+
+func (c *KategoriKasusController) Delete(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, "Invalid ID")
 	}
+	if err := c.KategoriKasusService.Delete(uint(id)); err != nil {
+		return ctx.JSON(http.StatusInternalServerError, "Failed to delete kategori kasus")
+	}
+	return ctx.JSON(http.StatusOK, "Kategori kasus deleted successfully")
+}
 
-	kategoriKasus, err := c.KategoriKasusServices.GetByID(uint(id))
+// Optional: Get All
+func (c *KategoriKasusController) GetAll(ctx echo.Context) error {
+	// dummy filterless fetch (you can enhance with query param filter later)
+	list, err := c.KategoriKasusService.GetAll()
 	if err != nil {
-		http.Error(w, "Kategori Kasus not found", http.StatusNotFound)
-		return
+		return ctx.JSON(http.StatusInternalServerError, "Failed to fetch data")
 	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(kategoriKasus)
+	return ctx.JSON(http.StatusOK, list)
 }
 
-func (c *KategoriKasusController) UpdateKategoriKasus(w http.ResponseWriter, r *http.Request) {
-	var kategoriKasus models.KategoriKasus
-	if err := json.NewDecoder(r.Body).Decode(&kategoriKasus); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
-
-	if err := c.KategoriKasusServices.Update(&kategoriKasus); err != nil {
-		http.Error(w, "Failed to update kategori kasus", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(kategoriKasus)
-}
-
-func (c *KategoriKasusController) DeleteKategoriKasus(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+// Optional: GetByID
+func (c *KategoriKasusController) GetByID(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, "Invalid ID")
 	}
-
-	if err := c.KategoriKasusServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete kategori kasus", http.StatusInternalServerError)
-		return
+	result, err := c.KategoriKasusService.GetByID(uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, "Data not found")
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Kategori kasus deleted successfully"))
+	return ctx.JSON(http.StatusOK, result)
 }

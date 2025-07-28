@@ -1,16 +1,52 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type FasilitasKesehatan struct {
-	ID        uint      `json:"id"`
-	Nama      string    `json:"nama"`       // Nama RS / Klinik / Puskesmas
-	Tipe     string    `json:"tipe"`      // RSUD, Puskesmas, dll
-	Alamat    string    `json:"alamat"`     // Alamat lengkap
-	JamBuka   time.Time    `json:"jam_buka"`   // Jam buka operasional
-	JamTutup  time.Time    `json:"jam_tutup"`  // Jam tutup
-	Kota      string    `json:"kota"`       // Kota atau kabupaten
-	Kontak    string    `json:"kontak"`     // No. telepon
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint           `json:"id_faskes"`
+	Nama      string         `json:"nama"`
+	Tipe      string         `json:"tipe"`       // RSUD, Klinik, Puskesmas, dll
+	Alamat    string         `json:"alamat"`
+	JamBuka   sql.NullTime   `json:"jam_buka"`
+	JamTutup  sql.NullTime   `json:"jam_tutup"`
+	Kota      string         `json:"kota"`
+	Kontak    string         `json:"kontak"`
+	Status    string         `json:"status"`     // aktif / non-aktif
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt *time.Time     `json:"deleted_at,omitempty"`
+}
+
+type FasilitasKesehatanCreate struct {
+	Nama     string `json:"nama" validate:"required"`
+	Tipe     string `json:"tipe" validate:"required"`
+	Alamat   string `json:"alamat" validate:"required"`
+	JamBuka  string `json:"jam_buka"`   // format: "15:04"
+	JamTutup string `json:"jam_tutup"`  // format: "15:04"
+	Kota     string `json:"kota" validate:"required"`
+	Kontak   string `json:"kontak" validate:"required"`
+	Status   string `json:"status" validate:"required"`
+}
+
+type FasilitasKesehatanUpdate struct {
+	ID       uint   `json:"id" validate:"required"`
+	Nama     string `json:"nama" validate:"required"`
+	Tipe     string `json:"tipe" validate:"required"`
+	Alamat   string `json:"alamat" validate:"required"`
+	JamBuka  string `json:"jam_buka"`
+	JamTutup string `json:"jam_tutup"`
+	Kota     string `json:"kota" validate:"required"`
+	Kontak   string `json:"kontak" validate:"required"`
+	Status   string `json:"status" validate:"required"`
+}
+
+type FasilitasKesehatanFilter struct {
+	PaginationFilter
+	Nama   string `json:"nama,omitempty"`
+	Tipe   string `json:"tipe,omitempty"`
+	Kota   string `json:"kota,omitempty"`
+	Status string `json:"status,omitempty"`
 }

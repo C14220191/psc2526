@@ -1,81 +1,92 @@
 package controller
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-
 	"backend/interfaces"
 	"backend/models"
+	"github.com/labstack/echo/v4"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 type LaporanKondisiKorbanController struct {
-	LaporanKondisiKorbanServices interfaces.LaporanKondisiKorbanService
+	LaporanKondisiKorbanServices interfaces.LaporanKondisiKorbanInterface
 }
 
-func (c *LaporanKondisiKorbanController) CreateLaporanKondisiKorban(w http.ResponseWriter, r *http.Request) {
-	var laporan models.LaporanKondisiKorban
-	if err := json.NewDecoder(r.Body).Decode(&laporan); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+func NewLaporanKondisiKorbanController(service interfaces.LaporanKondisiKorbanInterface) *LaporanKondisiKorbanController {
+	return &LaporanKondisiKorbanController{
+		LaporanKondisiKorbanServices: service,
 	}
-
-	if err := c.LaporanKondisiKorbanServices.Create(&laporan); err != nil {
-		http.Error(w, "Failed to create laporan", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(laporan)
 }
 
-func (c *LaporanKondisiKorbanController) GetLaporanKondisiKorbanByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *LaporanKondisiKorbanController) Create(ctx echo.Context) error {
+	var data models.LaporanKondisiKorban
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+		})
+	}
+	data.CreatedAt = time.Now()
+	data.UpdatedAt = time.Now()
+	result, err := c.LaporanKondisiKorbanServices.Create(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *LaporanKondisiKorbanController) GetByID(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+		})
 	}
-
-	laporan, err := c.LaporanKondisiKorbanServices.GetByID(uint(id))
-	if err != nil {
-		http.Error(w, "Laporan not found", http.StatusNotFound)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(laporan)
-}
-
-func (c *LaporanKondisiKorbanController) UpdateLaporanKondisiKorban(w http.ResponseWriter, r *http.Request) {
 	var laporan models.LaporanKondisiKorban
-	if err := json.NewDecoder(r.Body).Decode(&laporan); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+	result, err := c.LaporanKondisiKorbanServices.GetByID(ctx.Request().Context(), &laporan, uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusNotFound, result)
 	}
-
-	if err := c.LaporanKondisiKorbanServices.Update(&laporan); err != nil {
-		http.Error(w, "Failed to update laporan", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(laporan)
+	return ctx.JSON(result.StatusCode, result)
 }
 
-func (c *LaporanKondisiKorbanController) DeleteLaporanKondisiKorban(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *LaporanKondisiKorbanController) Update(ctx echo.Context) error {
+	var data models.LaporanKondisiKorban
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+		})
+	}
+	data.UpdatedAt = time.Now()
+	result, err := c.LaporanKondisiKorbanServices.Update(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *LaporanKondisiKorbanController) Delete(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+		})
 	}
-
-	if err := c.LaporanKondisiKorbanServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete laporan", http.StatusInternalServerError)
-		return
+	err = c.LaporanKondisiKorbanServices.Delete(uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, models.Response{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete laporan",
+		})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Laporan deleted successfully"))
+	return ctx.JSON(http.StatusOK, models.Response{
+		StatusCode: http.StatusOK,
+		Message:    "Laporan deleted successfully",
+	})
 }

@@ -36,6 +36,24 @@ func (s *KategoriKasusService) Update(data *models.KategoriKasus) error {
 	_, err := s.DB.Exec(query, data.Nama_kategori, data.UpdatedAt, data.ID)
 	return err
 }
+func (s *KategoriKasusService) GetAll() ([]*models.KategoriKasus, error) {
+	query := `SELECT id, nama_kategori, deskripsi, created_at, updated_at FROM kategori_kasus`
+	rows, err := s.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*models.KategoriKasus
+	for rows.Next() {
+		var k models.KategoriKasus
+		if err := rows.Scan(&k.ID, &k.Nama_kategori, &k.Deskripsi, &k.CreatedAt, &k.UpdatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, &k)
+	}
+	return list, nil
+}
 
 func (s *KategoriKasusService) Delete(id uint) error {
 	query := `DELETE FROM kategori_kasus WHERE id = ?`
