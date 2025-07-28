@@ -147,7 +147,7 @@ func (s *AssessmentService) Update(data *models.AssessmentUpdate, ctx context.Co
 		return &res, err
 	}
 	defer stmt.Close()
-	_, err = stmt.ExecContext(ctx, data.KasusID, data.Jawaban, data.ID)
+	result, err := stmt.ExecContext(ctx, data.KasusID, data.Jawaban, data.ID)
 	if err != nil {
 		tx.Rollback()
 		res.StatusCode = http.StatusInternalServerError
@@ -155,6 +155,22 @@ func (s *AssessmentService) Update(data *models.AssessmentUpdate, ctx context.Co
 		res.Data = nil
 		return &res, err
 	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to get rows affected"
+		res.Data = nil
+		return &res, err
+	}
+	if rowsAffected == 0 {
+		tx.Rollback()
+		res.StatusCode = http.StatusNotFound
+		res.Message = "No assessment found with the given ID"
+		res.Data = nil
+		return &res, nil
+	}
+	
 	if err := tx.Commit(); err != nil {
 		res.StatusCode = http.StatusInternalServerError
 		res.Message = "Failed to commit transaction"
