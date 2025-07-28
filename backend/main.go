@@ -1,25 +1,24 @@
 package main
 
 import (
-	"backend/router"
-	"database/sql"
-	"log"
-	
+	"backend/db"
+	"backend/validator"
 
-	"github.com/labstack/echo/v4"
+	"backend/routes"
+
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/psc_db")
-	if err != nil {
-		log.Fatal("DB connection failed:", err)
-	}
-	defer db.Close()
-
+	db.Init()
+	conn := db.CreateCon()
+	validator.InitValidator()
 	e := echo.New()
-	router.RegisterUserRoutes(e, db)
+	e.Validator = validator.GetEchoAdapter()
+	routes.RegisterUserRoutes(e, conn)
+	routes.RegisterAssessmentRoutes(e, conn)
+	routes.AdminRoute(e, conn)
 
-	log.Println("Server running at http://localhost:8080")
 	e.Logger.Fatal(e.Start(":8080"))
 }
