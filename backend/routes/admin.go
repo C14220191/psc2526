@@ -12,8 +12,18 @@ import (
 func AdminRoute(e *echo.Echo, db *sql.DB) error {
 	adminService := services.NewAdminService(db)
 	adminController := controller.NewAdminController(adminService)
+
+	//get
 	e.GET("/admin", adminController.GetAll)
+	e.GET("/admin/:id", adminController.GetByID)
+
+	//post
 	e.POST("/admin", adminController.Create)
-	e.DELETE("admin/:id", adminController.DeleteAdmin)
+	
+	//put
+	e.PUT("/admin/:id", adminController.Update)
+
+	//delete
+	e.DELETE("/admin/:id", adminController.DeleteAdmin)
 	return nil
 }
