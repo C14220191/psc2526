@@ -22,16 +22,18 @@ func NewDokumentasiMitraController(service interfaces.DokumentasiMitraInterface)
 func (c *DokumentasiMitraController) Create(ctx echo.Context) error {
 	var data models.DokumentasiMitra
 	if err := ctx.Bind(&data); err != nil {
-		return ctx.JSON(http.StatusBadRequest, models.Response{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid input",
-		})
+		return ctx.JSON(http.StatusBadRequest, models.Response{StatusCode: http.StatusBadRequest, Message: "Invalid input"})
 	}
+
+	if err := ctx.Validate(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{StatusCode: http.StatusBadRequest, Message: "Validation failed"})
+	}
+
 	data.CreatedAt = time.Now()
 	data.UpdatedAt = time.Now()
 	result, err := c.DokumentasiMitraServices.Create(ctx.Request().Context(), &data)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, result)
+		return ctx.JSON(result.StatusCode, result)
 	}
 	return ctx.JSON(result.StatusCode, result)
 }
@@ -56,19 +58,20 @@ func (c *DokumentasiMitraController) GetByID(ctx echo.Context) error {
 func (c *DokumentasiMitraController) Update(ctx echo.Context) error {
 	var data models.DokumentasiMitra
 	if err := ctx.Bind(&data); err != nil {
-		return ctx.JSON(http.StatusBadRequest, models.Response{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Invalid input",
-		})
+		return ctx.JSON(http.StatusBadRequest, models.Response{StatusCode: http.StatusBadRequest, Message: "Invalid input"})
 	}
+
+	if err := ctx.Validate(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{StatusCode: http.StatusBadRequest, Message: "Validation failed"})
+	}
+
 	data.UpdatedAt = time.Now()
 	result, err := c.DokumentasiMitraServices.Update(ctx.Request().Context(), &data)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, result)
+		return ctx.JSON(result.StatusCode, result)
 	}
 	return ctx.JSON(result.StatusCode, result)
 }
-
 func (c *DokumentasiMitraController) Delete(ctx echo.Context) error {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)

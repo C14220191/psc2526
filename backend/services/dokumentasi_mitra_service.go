@@ -20,17 +20,35 @@ func NewDokumentasiMitraService(db *sql.DB) *DokumentasiMitraService {
 
 func (s *DokumentasiMitraService) Create(ctx context.Context, data *models.DokumentasiMitra) (*models.Response, error) {
 	var res models.Response
-	query := `INSERT INTO dokumentasi_mitra (id_mitra, file_url, keterangan, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
-	_, err := s.DB.ExecContext(ctx, query, data.IDMitra, data.FileURL, data.Keterangan, data.CreatedAt, data.UpdatedAt)
+
+	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to start transaction"
+		return &res, err
+	}
+
+	query := `INSERT INTO dokumentasi_mitra (id_mitra, file_url, keterangan, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
+	_, err = tx.ExecContext(ctx, query, data.IDMitra, data.FileURL, data.Keterangan, data.CreatedAt, data.UpdatedAt)
+	if err != nil {
+		tx.Rollback()
 		res.StatusCode = http.StatusInternalServerError
 		res.Message = "Failed to create dokumentasi mitra"
 		return &res, err
 	}
+
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Transaction commit failed"
+		return &res, err
+	}
+
 	res.StatusCode = http.StatusCreated
 	res.Message = "Dokumentasi mitra created successfully"
 	return &res, nil
 }
+
 
 func (s *DokumentasiMitraService) GetByID(ctx context.Context, dokumentasi *models.DokumentasiMitra, id uint) (*models.Response, error) {
 	var res models.Response
@@ -50,17 +68,39 @@ func (s *DokumentasiMitraService) GetByID(ctx context.Context, dokumentasi *mode
 
 func (s *DokumentasiMitraService) Update(ctx context.Context, data *models.DokumentasiMitra) (*models.Response, error) {
 	var res models.Response
-	query := `UPDATE dokumentasi_mitra SET file_url = ?, keterangan = ?, updated_at = ? WHERE id = ?`
-	_, err := s.DB.ExecContext(ctx, query, data.FileURL, data.Keterangan, data.UpdatedAt, data.ID)
+
+	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to start transaction"
+		return &res, err
+	}
+
+	query := `
+	UPDATE dokumentasi_mitra
+	SET id_mitra = ?, file_url = ?, keterangan = ?, updated_at = ?
+	WHERE id = ?`
+
+	_, err = tx.ExecContext(ctx, query, data.IDMitra, data.FileURL, data.Keterangan, data.UpdatedAt, data.ID)
+	if err != nil {
+		tx.Rollback()
 		res.StatusCode = http.StatusInternalServerError
 		res.Message = "Failed to update dokumentasi mitra"
 		return &res, err
 	}
+
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Transaction commit failed"
+		return &res, err
+	}
+
 	res.StatusCode = http.StatusOK
 	res.Message = "Dokumentasi mitra updated successfully"
 	return &res, nil
 }
+
 
 func (s *DokumentasiMitraService) Delete(id uint) error {
 	query := `DELETE FROM dokumentasi_mitra WHERE id = ?`
