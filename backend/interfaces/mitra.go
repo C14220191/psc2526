@@ -1,9 +1,15 @@
+// interfaces/mitra_interface.go
 package interfaces
-import "backend/models"
+
+import (
+	"context"
+	"backend/models"
+)
 
 type MitraService interface {
-	Create(data *models.Mitra) error
-	GetByID(id uint) (*models.Mitra, error)
-	Update(data *models.Mitra) error
-	Delete(id uint) error
+	Create(ctx context.Context, data *models.MitraCreate) (*models.Response, error)
+	GetByID(ctx context.Context, id uint) (*models.Response, error)
+	Update(ctx context.Context, data *models.MitraUpdate) (*models.Response, error)
+	Delete(ctx context.Context, id uint) (*models.Response, error)
+	GetAll(ctx context.Context, filter *models.MitraFilter) (*models.Response, error)
 }

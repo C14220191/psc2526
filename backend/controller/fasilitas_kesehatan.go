@@ -17,13 +17,20 @@ func NewFasilitasKesehatanController(s interfaces.FasilitasKesehatanInterface) *
 	return &FasilitasKesehatanController{FasilitasService: s}
 }
 
+// FasilitasKesehatanController with validation
 func (c *FasilitasKesehatanController) Create(ctx echo.Context) error {
 	var data models.FasilitasKesehatanCreate
 	if err := ctx.Bind(&data); err != nil {
 		return ctx.JSON(http.StatusBadRequest, models.Response{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Invalid input",
-			Data:       nil,
+		})
+	}
+	if err := ctx.Validate(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Validation failed",
+			Data:       err.Error(),
 		})
 	}
 	result, err := c.FasilitasService.Create(ctx.Request().Context(), &data)
@@ -73,7 +80,13 @@ func (c *FasilitasKesehatanController) Update(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, models.Response{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Invalid input",
-			Data:       nil,
+		})
+	}
+	if err := ctx.Validate(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Validation failed",
+			Data:       err.Error(),
 		})
 	}
 	result, err := c.FasilitasService.Update(ctx.Request().Context(), &data)

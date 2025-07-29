@@ -56,13 +56,30 @@ func (c *DokumentasiMitraController) GetByID(ctx echo.Context) error {
 }
 
 func (c *DokumentasiMitraController) Update(ctx echo.Context) error {
-	var data models.DokumentasiMitra
-	if err := ctx.Bind(&data); err != nil {
-		return ctx.JSON(http.StatusBadRequest, models.Response{StatusCode: http.StatusBadRequest, Message: "Invalid input"})
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+		})
 	}
 
+	var data models.DokumentasiMitra
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+		})
+	}
+
+	data.ID = uint(id) // ✅ Set ID dari URL param
+
 	if err := ctx.Validate(&data); err != nil {
-		return ctx.JSON(http.StatusBadRequest, models.Response{StatusCode: http.StatusBadRequest, Message: "Validation failed"})
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Validation failed",
+		})
 	}
 
 	data.UpdatedAt = time.Now()
@@ -72,6 +89,7 @@ func (c *DokumentasiMitraController) Update(ctx echo.Context) error {
 	}
 	return ctx.JSON(result.StatusCode, result)
 }
+
 func (c *DokumentasiMitraController) Delete(ctx echo.Context) error {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)

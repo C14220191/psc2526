@@ -15,12 +15,16 @@ func main() {
 	conn := db.CreateCon()
 	validator.InitValidator()
 	e := echo.New()
+	
 	e.Validator = validator.GetEchoAdapter()
 	routes.RegisterUserRoutes(e, conn)
 	routes.RegisterAssessmentRoutes(e, conn)
 	routes.AdminRoute(e, conn)
 	routes.BeritaRoute(e, conn)
 	routes.DokterRoute(e, conn)
+	routes.DokumentasiMitraRoute(e, conn)
+	routes.InitMitraRoute(e, conn)
+	routes.FasilitasKesehatanRoute(e, conn)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

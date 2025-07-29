@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type FasilitasKesehatanService struct {
@@ -21,22 +22,30 @@ func NewFasilitasKesehatanService(db *sql.DB) *FasilitasKesehatanService {
 
 func (s *FasilitasKesehatanService) Create(ctx context.Context, data *models.FasilitasKesehatanCreate) (*models.Response, error) {
 	var res models.Response
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to begin transaction"
+		return &res, err
+	}
 
 	query := `
 	INSERT INTO fasilitas_kesehatan 
 	(nama, tipe, alamat, jam_buka, jam_tutup, kota, kontak, status, created_at, updated_at)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
 
-	_, err := s.DB.ExecContext(ctx, query,
+	_, err = tx.ExecContext(ctx, query,
 		data.Nama, data.Tipe, data.Alamat,
 		data.JamBuka, data.JamTutup, data.Kota,
 		data.Kontak, data.Status,
 	)
 	if err != nil {
+		tx.Rollback()
 		res.StatusCode = http.StatusInternalServerError
 		res.Message = "Failed to create fasilitas kesehatan"
 		return &res, err
 	}
+	tx.Commit()
 	res.StatusCode = http.StatusCreated
 	res.Message = "Fasilitas kesehatan created successfully"
 	return &res, nil
@@ -128,19 +137,49 @@ func (s *FasilitasKesehatanService) GetAll(ctx context.Context, filter *models.F
 
 func (s *FasilitasKesehatanService) GetByID(ctx context.Context, fasilitas *models.FasilitasKesehatan, id uint) (*models.Response, error) {
 	var res models.Response
-	query := `SELECT id, nama, tipe, alamat, jam_buka, jam_tutup, kota, kontak, status, created_at, updated_at, deleted_at
-	FROM fasilitas_kesehatan WHERE id = ? AND deleted_at IS NULL`
+
+	query := `SELECT id, nama, tipe, alamat, jam_buka, jam_tutup, kota, kontak, status, created_at, updated_at, deleted_at 
+	          FROM fasilitas_kesehatan 
+	          WHERE id = ? AND deleted_at IS NULL`
+
 	row := s.DB.QueryRowContext(ctx, query, id)
+
+	var jamBukaStr sql.NullString
+	var jamTutupStr sql.NullString
+	var deletedAt sql.NullTime
 
 	err := row.Scan(
 		&fasilitas.ID, &fasilitas.Nama, &fasilitas.Tipe, &fasilitas.Alamat,
-		&fasilitas.JamBuka, &fasilitas.JamTutup, &fasilitas.Kota, &fasilitas.Kontak,
-		&fasilitas.Status, &fasilitas.CreatedAt, &fasilitas.UpdatedAt, &fasilitas.DeletedAt,
+		&jamBukaStr, &jamTutupStr, &fasilitas.Kota, &fasilitas.Kontak,
+		&fasilitas.Status, &fasilitas.CreatedAt, &fasilitas.UpdatedAt, &deletedAt,
 	)
-	if err != nil {
+
+	if err == sql.ErrNoRows {
 		res.StatusCode = http.StatusNotFound
 		res.Message = "Data not found"
+		return &res, nil
+	} else if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Scan error"
 		return &res, err
+	}
+
+	// Parse jam buka & jam tutup dari string ke time
+	if jamBukaStr.Valid {
+		t, err := parseTime(jamBukaStr.String)
+		if err == nil {
+			fasilitas.JamBuka = sql.NullTime{Time: t, Valid: true}
+		}
+	}
+	if jamTutupStr.Valid {
+		t, err := parseTime(jamTutupStr.String)
+		if err == nil {
+			fasilitas.JamTutup = sql.NullTime{Time: t, Valid: true}
+		}
+	}
+
+	if deletedAt.Valid {
+		fasilitas.DeletedAt = &deletedAt.Time
 	}
 
 	res.StatusCode = http.StatusOK
@@ -149,23 +188,40 @@ func (s *FasilitasKesehatanService) GetByID(ctx context.Context, fasilitas *mode
 	return &res, nil
 }
 
+// Tambahkan helper ini di bawah fungsi GetByID atau tempat lain
+func parseTime(s string) (time.Time, error) {
+	// MySQL TIME format: "15:04:05"
+	return time.Parse("15:04:05", s)
+}
+
+
 func (s *FasilitasKesehatanService) Update(ctx context.Context, data *models.FasilitasKesehatanUpdate) (*models.Response, error) {
 	var res models.Response
+	tx, err := s.DB.BeginTx(ctx, nil)
+	if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to begin transaction"
+		return &res, err
+	}
+
 	query := `UPDATE fasilitas_kesehatan SET nama=?, tipe=?, alamat=?, jam_buka=?, jam_tutup=?, kota=?, kontak=?, status=?, updated_at=NOW() WHERE id=?`
-	_, err := s.DB.ExecContext(ctx, query,
+	_, err = tx.ExecContext(ctx, query,
 		data.Nama, data.Tipe, data.Alamat,
 		data.JamBuka, data.JamTutup, data.Kota,
 		data.Kontak, data.Status, data.ID,
 	)
 	if err != nil {
+		tx.Rollback()
 		res.StatusCode = http.StatusInternalServerError
-		res.Message = "Failed to update"
+		res.Message = "Failed to update fasilitas kesehatan"
 		return &res, err
 	}
+	tx.Commit()
 	res.StatusCode = http.StatusOK
 	res.Message = "Updated successfully"
 	return &res, nil
 }
+
 
 func (s *FasilitasKesehatanService) Delete(id uint) error {
 	query := `UPDATE fasilitas_kesehatan SET deleted_at = NOW() WHERE id = ?`
