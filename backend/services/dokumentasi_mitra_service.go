@@ -1,40 +1,65 @@
 package services
 
 import (
-	"database/sql"
+	"backend/interfaces"
 	"backend/models"
+	"context"
+	"database/sql"
+	"net/http"
 )
 
 type DokumentasiMitraService struct {
 	DB *sql.DB
 }
 
+var _ interfaces.DokumentasiMitraInterface = &DokumentasiMitraService{}
+
 func NewDokumentasiMitraService(db *sql.DB) *DokumentasiMitraService {
 	return &DokumentasiMitraService{DB: db}
 }
 
-func (s *DokumentasiMitraService) Create(data *models.DokumentasiMitra) error {
+func (s *DokumentasiMitraService) Create(ctx context.Context, data *models.DokumentasiMitra) (*models.Response, error) {
+	var res models.Response
 	query := `INSERT INTO dokumentasi_mitra (id_mitra, file_url, keterangan, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`
-	_, err := s.DB.Exec(query, data.IDMitra, data.FileURL, data.Keterangan, data.CreatedAt, data.UpdatedAt)
-	return err
-}
-
-func (s *DokumentasiMitraService) GetByID(id uint) (*models.DokumentasiMitra, error) {
-	query := `SELECT id, id_mitra, file_url, keterangan, created_at, updated_at FROM dokumentasi_mitra WHERE id = ?`
-	row := s.DB.QueryRow(query, id)
-
-	var result models.DokumentasiMitra
-	err := row.Scan(&result.ID, &result.IDMitra, &result.FileURL, &result.Keterangan, &result.CreatedAt, &result.UpdatedAt)
+	_, err := s.DB.ExecContext(ctx, query, data.IDMitra, data.FileURL, data.Keterangan, data.CreatedAt, data.UpdatedAt)
 	if err != nil {
-		return nil, err
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to create dokumentasi mitra"
+		return &res, err
 	}
-	return &result, nil
+	res.StatusCode = http.StatusCreated
+	res.Message = "Dokumentasi mitra created successfully"
+	return &res, nil
 }
 
-func (s *DokumentasiMitraService) Update(data *models.DokumentasiMitra) error {
+func (s *DokumentasiMitraService) GetByID(ctx context.Context, dokumentasi *models.DokumentasiMitra, id uint) (*models.Response, error) {
+	var res models.Response
+	query := `SELECT id, id_mitra, file_url, keterangan, created_at, updated_at FROM dokumentasi_mitra WHERE id = ?`
+	row := s.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(&dokumentasi.ID, &dokumentasi.IDMitra, &dokumentasi.FileURL, &dokumentasi.Keterangan, &dokumentasi.CreatedAt, &dokumentasi.UpdatedAt)
+	if err != nil {
+		res.StatusCode = http.StatusNotFound
+		res.Message = "Dokumentasi mitra not found"
+		return &res, err
+	}
+	res.StatusCode = http.StatusOK
+	res.Message = "Success"
+	res.Data = dokumentasi
+	return &res, nil
+}
+
+func (s *DokumentasiMitraService) Update(ctx context.Context, data *models.DokumentasiMitra) (*models.Response, error) {
+	var res models.Response
 	query := `UPDATE dokumentasi_mitra SET file_url = ?, keterangan = ?, updated_at = ? WHERE id = ?`
-	_, err := s.DB.Exec(query, data.FileURL, data.Keterangan, data.UpdatedAt, data.ID)
-	return err
+	_, err := s.DB.ExecContext(ctx, query, data.FileURL, data.Keterangan, data.UpdatedAt, data.ID)
+	if err != nil {
+		res.StatusCode = http.StatusInternalServerError
+		res.Message = "Failed to update dokumentasi mitra"
+		return &res, err
+	}
+	res.StatusCode = http.StatusOK
+	res.Message = "Dokumentasi mitra updated successfully"
+	return &res, nil
 }
 
 func (s *DokumentasiMitraService) Delete(id uint) error {

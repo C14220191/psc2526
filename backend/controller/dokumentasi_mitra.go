@@ -1,81 +1,92 @@
 package controller
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-
 	"backend/interfaces"
 	"backend/models"
+	"github.com/labstack/echo/v4"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 type DokumentasiMitraController struct {
-	DokumentasiMitraServices interfaces.DokumentasiMitraService
+	DokumentasiMitraServices interfaces.DokumentasiMitraInterface
 }
 
-func (c *DokumentasiMitraController) CreateDokumentasiMitra(w http.ResponseWriter, r *http.Request) {
-	var dokumentasiMitra models.DokumentasiMitra
-	if err := json.NewDecoder(r.Body).Decode(&dokumentasiMitra); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+func NewDokumentasiMitraController(service interfaces.DokumentasiMitraInterface) *DokumentasiMitraController {
+	return &DokumentasiMitraController{
+		DokumentasiMitraServices: service,
 	}
-
-	if err := c.DokumentasiMitraServices.Create(&dokumentasiMitra); err != nil {
-		http.Error(w, "Failed to create dokumentasi mitra", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(dokumentasiMitra)
 }
 
-func (c *DokumentasiMitraController) GetDokumentasiMitraByID(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *DokumentasiMitraController) Create(ctx echo.Context) error {
+	var data models.DokumentasiMitra
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+		})
+	}
+	data.CreatedAt = time.Now()
+	data.UpdatedAt = time.Now()
+	result, err := c.DokumentasiMitraServices.Create(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
+	}
+	return ctx.JSON(result.StatusCode, result)
+}
+
+func (c *DokumentasiMitraController) GetByID(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+		})
 	}
-
-	dokumentasiMitra, err := c.DokumentasiMitraServices.GetByID(uint(id))
+	var dokumentasi models.DokumentasiMitra
+	result, err := c.DokumentasiMitraServices.GetByID(ctx.Request().Context(), &dokumentasi, uint(id))
 	if err != nil {
-		http.Error(w, "Dokumentasi mitra not found", http.StatusNotFound)
-		return
+		return ctx.JSON(http.StatusNotFound, result)
 	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dokumentasiMitra)
+	return ctx.JSON(result.StatusCode, result)
 }
 
-func (c *DokumentasiMitraController) UpdateDokumentasiMitra(w http.ResponseWriter, r *http.Request) {
-	var dokumentasiMitra models.DokumentasiMitra
-	if err := json.NewDecoder(r.Body).Decode(&dokumentasiMitra); err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+func (c *DokumentasiMitraController) Update(ctx echo.Context) error {
+	var data models.DokumentasiMitra
+	if err := ctx.Bind(&data); err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid input",
+		})
 	}
-
-	if err := c.DokumentasiMitraServices.Update(&dokumentasiMitra); err != nil {
-		http.Error(w, "Failed to update dokumentasi mitra", http.StatusInternalServerError)
-		return
+	data.UpdatedAt = time.Now()
+	result, err := c.DokumentasiMitraServices.Update(ctx.Request().Context(), &data)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, result)
 	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dokumentasiMitra)
+	return ctx.JSON(result.StatusCode, result)
 }
 
-func (c *DokumentasiMitraController) DeleteDokumentasiMitra(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
+func (c *DokumentasiMitraController) Delete(ctx echo.Context) error {
+	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
-		return
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID",
+		})
 	}
-
-	if err := c.DokumentasiMitraServices.Delete(uint(id)); err != nil {
-		http.Error(w, "Failed to delete dokumentasi mitra", http.StatusInternalServerError)
-		return
+	err = c.DokumentasiMitraServices.Delete(uint(id))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, models.Response{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete dokumentasi mitra",
+		})
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Dokumentasi mitra deleted successfully"))
+	return ctx.JSON(http.StatusOK, models.Response{
+		StatusCode: http.StatusOK,
+		Message:    "Dokumentasi mitra deleted successfully",
+	})
 }

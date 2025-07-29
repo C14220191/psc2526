@@ -30,12 +30,14 @@ func Init() {
 
 	err = db.Ping()
 	if err != nil {
+		fmt.Println("Error connecting to the database:", err)
 		panic("DSN invalid")
 	}
 }
 func CreateCon() *sql.DB {
 	return db
 }
+
 func Close() {
 	if db != nil {
 		err = db.Close()

@@ -27,7 +27,11 @@ type SSLConfig struct {
 }
 
 func GetConfig() DBConfigurations {
-	conf := DBConfigurations{}
-	gonfig.GetConf("config/config.json", &conf)
-	return conf
+	conf := AppConfig{}
+	err := gonfig.GetConf("config/config.json", &conf)
+	if err != nil {
+		panic("Gagal load config.json: " + err.Error())
+	}
+	return conf.DBConfigurations
 }
+

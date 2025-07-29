@@ -29,6 +29,8 @@ func (c *DokterController) Create(ctx echo.Context) error {
 		})
 	}
 
+	
+
 	result, err := c.DokterService.Create(ctx.Request().Context(), &data)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, result)
@@ -71,6 +73,16 @@ func (c *DokterController) GetByID(ctx echo.Context) error {
 }
 
 func (c *DokterController) Update(ctx echo.Context) error {
+	idStr := ctx.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, models.Response{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid ID in URL",
+			Data:       nil,
+		})
+	}
+
 	var data models.DokterUpdate
 	if err := ctx.Bind(&data); err != nil {
 		return ctx.JSON(http.StatusBadRequest, models.Response{
@@ -79,6 +91,9 @@ func (c *DokterController) Update(ctx echo.Context) error {
 			Data:       nil,
 		})
 	}
+
+	data.ID = uint(id) // 🚨 Ambil ID dari URL, bukan dari body
+
 	result, err := c.DokterService.Update(ctx.Request().Context(), &data)
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, result)

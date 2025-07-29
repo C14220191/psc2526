@@ -160,6 +160,11 @@ func (s *DokterService) Update(ctx context.Context, data *models.DokterUpdate) (
 		return &res, err
 	}
 	affected, _ := result.RowsAffected()
+	if affected == 0 {
+		res.StatusCode = http.StatusNotFound
+		res.Message = "Dokter not found"
+		return &res, nil
+	}
 	res.StatusCode = http.StatusOK
 	res.Message = "Dokter updated successfully"
 	res.Data = affected

@@ -20,6 +20,7 @@ func main() {
 	routes.RegisterAssessmentRoutes(e, conn)
 	routes.AdminRoute(e, conn)
 	routes.BeritaRoute(e, conn)
+	routes.DokterRoute(e, conn)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
